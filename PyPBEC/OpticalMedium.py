@@ -12,6 +12,7 @@ class OpticalMedium():
 
 	available_media = list()
 	available_media.append("Rhodamine6G")
+	available_media.append("InGaAs_QW")
 
 	def __init__(self, optical_medium):
 
@@ -32,6 +33,10 @@ class OpticalMedium():
 
 		if optical_medium == "Rhodamine6G":
 			self.medium = Rhodamine6G()
+
+		if optical_medium == "InGaAs_QW":
+			self.medium = InGaAs_QW()
+
 
 
 	def get_rates(self, lambdas, **kwargs):
@@ -121,5 +126,70 @@ class Rhodamine6G(OpticalMedium):
 			
 		emission_rates = np.array([single_adjust_func(-1.0*freq(a_l)+wpzl) for a_l in lambdas])*peak_Xsectn
 		absorption_rates = np.array([single_adjust_func(freq(a_l)-wpzl) for a_l in lambdas])*peak_Xsectn
+
+		return absorption_rates, emission_rates
+
+
+class InGaAs_QW(OpticalMedium):
+
+	def __init__(self):
+		pass
+
+	def get_rates(self, lambdas, mode):
+		"""
+			Rates for InGaAs single quantum well. Converts from absorption percentage chance to a rate using average time taken to travel cavity.
+
+			Parameters:
+
+				lambdas (list, or other iterable):  	Wavelength points where the rates are to be calculated. Wavelength is in meters
+				n (float): 								index of refraction
+
+		"""
+
+		# absorption data
+		min_wavelength = 900
+		max_wavelength = 970
+		absorption_spectrum_datafile = Path("data") / 'qw_absorption.csv'
+		absorption_spectrum_datafile = Path(os.path.dirname(os.path.abspath(__file__))) / absorption_spectrum_datafile
+		raw_data2 = pd.read_csv(absorption_spectrum_datafile)
+		initial_index = raw_data2.iloc[(raw_data2['wavelength (nm)'] - min_wavelength).abs().argsort()].index[0]
+		raw_data2 = raw_data2.iloc[initial_index:].reset_index(drop=True)
+		final_index = raw_data2.iloc[(raw_data2['wavelength (nm)'] - max_wavelength).abs().argsort()].index[0]
+		raw_data2 = raw_data2.iloc[:final_index].reset_index(drop=True)
+		absorption_data = raw_data2
+		absorption_data_normalized = absorption_data['absorption per pass (percentage)'].values / np.max(
+			absorption_data['absorption per pass (percentage)'].values)
+		absorption_spectrum = np.squeeze(
+			np.array([[absorption_data['wavelength (nm)'].values], [absorption_data_normalized]], dtype=float))
+		interpolated_absorption_spectrum = interp1d(absorption_spectrum[0, :], absorption_spectrum[1, :], kind='cubic')
+
+		# emission data
+		fluorescence_spectrum_datafile = Path("data") / 'qw_emission.csv'
+		fluorescence_spectrum_datafile = Path(
+			os.path.dirname(os.path.abspath(__file__))) / fluorescence_spectrum_datafile
+		raw_data = pd.read_csv(fluorescence_spectrum_datafile)
+		initial_index = raw_data.iloc[(raw_data['wavelength (nm)'] - min_wavelength).abs().argsort()].index[0]
+		raw_data = raw_data.iloc[initial_index:].reset_index(drop=True)
+		final_index = raw_data.iloc[(raw_data['wavelength (nm)'] - max_wavelength).abs().argsort()].index[0]
+		raw_data = raw_data.iloc[:final_index].reset_index(drop=True)
+		fluorescence_data = raw_data
+		fluorescence_data_normalized = fluorescence_data['fluorescence (arb. units)'].values / np.max(
+			fluorescence_data['fluorescence (arb. units)'].values)
+		emission_spectrum = np.squeeze(
+			np.array([[fluorescence_data['wavelength (nm)'].values], [fluorescence_data_normalized]], dtype=float))
+		interpolated_emission_spectrum = interp1d(emission_spectrum[0, :], emission_spectrum[1, :], kind='cubic')
+
+		# Uses both datasets
+		if np.min(1e9 * np.array(lambdas)) < 900 or np.max(1e9 * np.array(lambdas)) > 970:
+			raise Exception('*** Restrict wavelength to the range between 900 and 970 nm ***')
+
+		temperature = 300
+		cavity_lengths = lambdas*mode/2
+
+		emission_rates = interpolated_emission_spectrum(lambdas*1e9)
+		absorption_spectrum = interpolated_absorption_spectrum(lambdas*1e9)
+		absorption_time = 2*cavity_lengths*absorption_spectrum/sc.c #Average time taken to absorb one photon.
+		absorption_rates = 1/absorption_time
+
 
 		return absorption_rates, emission_rates

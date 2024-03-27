@@ -12,6 +12,7 @@ import scipy.sparse.linalg as linalg
 import matplotlib.pyplot as plt
 import matplotlib
 import copy
+from tqdm import tqdm
 
 class Cavity():
 	
@@ -293,8 +294,24 @@ class Modes():
 
 		RoC = 1e6*RoC
 		depth = 1e6*depth
-		aux = (np.sqrt(RoC**2 - (self.X**2 + (self.Y)**2)) - RoC)
+		aux = (np.sqrt(RoC**2 - (self.X**2 + (self.Y/2)**2)) - RoC)
 		self.geometry = (np.heaviside(aux + depth, 1)*aux) - (np.heaviside(-aux - depth, 1)*depth)
+		self.geometry = - self.geometry
+
+	def set_geometry_elliptical(self, RoC, depth, anistropy_factor):
+
+		"""
+
+			Parameters:
+				RoC (float):		Radius of curvature, in meters.
+				depth (float):		Feature depth, in meters.
+
+		"""
+
+		RoC = 1e6 * RoC
+		depth = 1e6 * depth
+		aux = (np.sqrt(RoC ** 2 - (self.X ** 2 + (self.Y/anistropy_factor) ** 2)) - RoC)
+		self.geometry = (np.heaviside(aux + depth, 1) * aux) - (np.heaviside(-aux - depth, 1) * depth)
 		self.geometry = - self.geometry
 
 
@@ -391,11 +408,11 @@ class Modes():
 
 
 
-	def plot_cavity(self):
+	def plot_cavity(self, start_mode=0, plot=True):
 
 		matplotlib.rcParams.update({'font.size': 8})
-		fig, ((ax1, ax2, ax3, ax4), (ax5, ax6, ax7, ax8)) = plt.subplots(2,4, figsize=(14*0.8, 6*0.8))
-		axes = [ax1, ax2, ax3, ax4, ax5, ax6, ax7, ax8]
+		fig, ((ax1, ax2, ax3, ax4), (ax5, ax6, ax7, ax8), (ax9, ax10, ax11, ax12)) = plt.subplots(3,4, figsize=(14*0.8, 6*0.8))
+		axes = [ax1, ax2, ax3, ax4, ax5, ax6, ax7, ax8, ax9, ax10, ax11, ax12]
 
 		if self.X.shape[0]==1 or self.X.shape[1]==1:
 			if self.X.shape[0]==1:
@@ -440,10 +457,11 @@ class Modes():
 				axes[2].set_title("Cavity pump")
 			first_mode_ax_ind = 3
 		else:
-			first_mode_ax_ind = 2		
+			first_mode_ax_ind = 2 #Sets the index of the first real mode when being plotted.
 
-		for i in range(first_mode_ax_ind, 8):
+		for i in range(first_mode_ax_ind+start_mode, 12+start_mode):
 			aux_ind = i-first_mode_ax_ind
+			i = i-start_mode
 			if self.n_modes > aux_ind:
 				if self.X.shape[0]==1 or self.X.shape[1]==1:
 					if self.X.shape[0]==1:
@@ -463,7 +481,12 @@ class Modes():
 					axes[i].set_title(r'Mode {0} (Squared amplitude)'.format(aux_ind))
 
 		plt.tight_layout()
-		plt.show()
+		if plot==False:
+			plt.savefig(r'Plots/modes{}.png'.format(aux_ind))
+			plt.close()
+		else:
+			plt.show()
+			plt.close()
 
 
 
