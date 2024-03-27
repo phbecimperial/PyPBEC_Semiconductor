@@ -5,4 +5,4 @@ test.py
 *.ipynb_checkpoints*
 /docs/*.*
 /docs/!*.html
-**.png
+*.png
