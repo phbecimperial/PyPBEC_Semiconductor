@@ -5,6 +5,12 @@
 The `PyPBEC` repository contains different approaches to solve the general theoretical model introduced by [Kirton and Keeling
 in *Nonequilibrium Model of Photon Condensation*](https://doi.org/10.1103/PhysRevLett.111.100404), to study both the thermal and nonequilibrium properties of light, inside a dye-filled microcavity.
 
+The `PyPBEC_Semiconductor` repository is a fork of the original repository, developed to study semiconductor cavities, and meant for easy comparison to experimental data. Additionally, it also includes functionality to create phase diagrams, such as the type seen in [3]. Feature updates include:
+
+Elliptical cavities, which are used to break spherical symmetry and see even Hermite-Gauss modes, as seen in experiment.
+`InGaAs_QW` absorption and emission data to model the semiconductor used in [Insert Schofield ref here]. 
+Features to facilitate making a phase diagram. 
+
 The present version of the repository includes a preliminary set of methods to obtain the steady-state, as well as the temporal dynamics of photons. The model has been used to predict and describe several interesting physical processes:
 
 [1] [*Thermalization and breakdown of thermalization in photon condensates*](https://doi.org/10.1103/PhysRevA.91.033826), P. Kirton and J. Keeling, Phys. Rev. A **91**, 033826 (2015).

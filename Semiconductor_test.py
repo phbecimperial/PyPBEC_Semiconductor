@@ -36,8 +36,8 @@ cavity_modes.load_pump(pump=pump)
 cavity_modes.plot_cavity(start_mode=0, plot=False)
 
 #If you want to see more modes
-for i in tqdm(range(1, 12)):
-    cavity_modes.plot_cavity(start_mode=i*8, plot=False)
+# for i in tqdm(range(1, 12)):
+#     cavity_modes.plot_cavity(start_mode=i*8, plot=False)
 
 from PyPBEC.OpticalMedium import OpticalMedium
 QW = OpticalMedium(optical_medium="InGaAs_QW")
