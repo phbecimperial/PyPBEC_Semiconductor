@@ -6,3 +6,4 @@ test.py
 /docs/*.*
 /docs/!*.html
 *.png
+/.idea
