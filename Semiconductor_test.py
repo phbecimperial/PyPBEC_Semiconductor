@@ -17,7 +17,7 @@ n = 1*2.5
 L0 = lamb0 * q / (2*n)       #cavity length, reconstructed to give us correct wavelengths.
 
 n_modes = 50
-feature_RoC = 100*1e-6   # This is 0.1 meters. Who knows why
+feature_RoC = 100*1e-6   # This is 0.1 meters ROC. idk why.
 feature_depth = 0.1 # meters
 
 from PyPBEC.Cavity import Modes
@@ -31,10 +31,10 @@ print(lambdas)
 pump_width = 2.5*1e-6       # meters
 
 X, Y = cavity_modes.get_cavity_grid()
-pump_base = np.exp(-((X)**2+Y**2) / pump_width**2)
+pump_base = np.exp(-((X)**2+(Y-5e-6)**2) / pump_width**2)
 pump = 1*(pump_base/np.sum(pump_base))
 cavity_modes.load_pump(pump=pump)
-cavity_modes.plot_cavity(start_mode=0, plot=False) #If plot=False, will save instead.
+cavity_modes.plot_cavity(start_mode=0, plot=True) #If plot=False, will save instead.
 
 #If you want to see more modes
 # for i in tqdm(range(1, 12)):
@@ -65,7 +65,7 @@ cavity.set_cavity_absorption_rates(rates=absorption_rates)
 # Properties of the molecular modes
 cavity.set_reservoir_decay_rates(rates=Gamma_down*np.ones(g.shape[1]))
 cavity.set_reservoir_pump_rates(rates=np.reshape(pump, [pump.shape[0]*pump.shape[1]]))
-cavity.set_reservoir_population(population=np.ones(cavity.J))
+cavity.set_reservoir_population(population=np.ones(cavity.J)*100000)
 
 
 # Coupling between photonic and molecular modes
