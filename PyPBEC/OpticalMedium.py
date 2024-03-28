@@ -7,6 +7,7 @@ import pandas as pd
 import sys
 import os
 import csv
+from scipy.integrate import quad
 
 class OpticalMedium():
 
@@ -180,16 +181,26 @@ class InGaAs_QW(OpticalMedium):
 		interpolated_emission_spectrum = interp1d(emission_spectrum[0, :], emission_spectrum[1, :], kind='cubic')
 
 		# Uses both datasets
-		if np.min(1e9 * np.array(lambdas)) < 900 or np.max(1e9 * np.array(lambdas)) > 970:
-			raise Exception('*** Restrict wavelength to the range between 900 and 970 nm ***')
+		if np.min(1e9 * np.array(lambdas)) < 900 or np.max(1e9 * np.array(lambdas)) > 969:
+			raise Exception('*** Restrict wavelength to the range between 900 and 969 nm ***')
 
 		temperature = 300
-		cavity_lengths = lambdas*mode/2
 
-		emission_rates = interpolated_emission_spectrum(lambdas*1e9)
-		absorption_spectrum = interpolated_absorption_spectrum(lambdas*1e9)
-		absorption_time = 2*cavity_lengths*absorption_spectrum/sc.c #Average time taken to absorb one photon.
-		absorption_rates = 1/absorption_time
+		#Create function to calculate absorption rates
+		def absorption_rates_func(lamb, mode):
+			cavity_length = lamb * mode / 2
+			abs_time = 2*cavity_length/(sc.c*interpolated_absorption_spectrum(lamb))
+			absorption_rate = 1/abs_time
+			return absorption_rate
+
+		#Normalise emission rates to absorption
+		abs_sum, _ = quad(absorption_rates_func, 900, 969, args=(mode,))
+		emi_sum, _ = quad(interpolated_emission_spectrum, 900, 969)
+		sf = abs_sum/emi_sum
+
+		emission_rates = interpolated_emission_spectrum(lambdas*1e9)*sf
+		absorption_rates = absorption_rates_func(lambdas*1e9, mode)
+
 
 
 		return absorption_rates, emission_rates
