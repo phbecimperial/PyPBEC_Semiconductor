@@ -294,7 +294,7 @@ class Modes():
 
 		RoC = 1e6*RoC
 		depth = 1e6*depth
-		aux = (np.sqrt(RoC**2 - (self.X**2 + (self.Y/2)**2)) - RoC)
+		aux = (np.sqrt(RoC**2 - (self.X**2 + (self.Y)**2)) - RoC)
 		self.geometry = (np.heaviside(aux + depth, 1)*aux) - (np.heaviside(-aux - depth, 1)*depth)
 		self.geometry = - self.geometry
 

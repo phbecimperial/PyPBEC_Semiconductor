@@ -105,8 +105,8 @@ class Rhodamine6G(OpticalMedium):
 		interpolated_emission_spectrum = interp1d(emission_spectrum[0,:], emission_spectrum[1,:], kind='cubic')
 
 		# Uses both datasets
-		if np.min(1e9*np.array(lambdas)) < 480 or np.max(1e9*np.array(lambdas)) > 650:
-			raise Exception('*** Restrict wavelength to the range between 480 and 650 nm ***')
+		# if np.min(1e9*np.array(lambdas)) < 480 or np.max(1e9*np.array(lambdas)) > 650:
+		# 	raise Exception('*** Restrict wavelength to the range between 480 and 650 nm ***')
 
 		temperature = 300
 		lamZPL = 545e-9
