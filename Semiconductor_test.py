@@ -7,14 +7,30 @@ from tqdm import tqdm
 
 sys.path.insert(0, os.path.abspath(''))
 
+def degeneracy_sum(degeneracy_array, populations):
+    summed_pop = []
+    populations = populations.flatten()
+
+    i=0
+    while i < len(degeneracy_array):
+        if degeneracy_array[i] == 1:
+            summed_pop.append(populations[i])
+            i = i + 1
+        elif degeneracy_array[i] == 2:
+            summed_pop.append(degeneracy_array[i] + degeneracy_array[i+1])
+            i = i + 2
+
+    return summed_pop
+
+
 
 grid_size = 50.0*1e-6      # meters
-grid_delta = 4*1e-6      # meters
-L0 = 1.96*1e-6              # meters
+grid_delta = 2*1e-6      # meters
+L0 = 1.98*1e-6              # meters
 q = 10                     # longitudinal mode number
 n = 2.4
 #n=1.43
-n_modes = 40
+n_modes = 30
 feature_RoC = 0.1   # meters
 feature_depth = 0.279*1e-6 # meters
 
@@ -32,8 +48,8 @@ pump_base = np.exp(-((X) ** 2 + Y ** 2) / pump_width ** 2)
 pump = 1 * (pump_base / np.sum(pump_base))
 cavity_modes.load_pump(pump=pump)
 
-for i in tqdm(range(0, 1)):
-    cavity_modes.plot_cavity(start_mode=i * 8, plot=True)
+# for i in tqdm(range(0, 7)):
+#     cavity_modes.plot_cavity(start_mode=i * 8, plot=False)
 
 dye_concentration = 2.0  # in mM, with 1 mM=1mol/m^3
 
@@ -65,6 +81,7 @@ plt.close()
 
 # Like in the paper, idk why
 Gamma_down = cavity_loss_rate / 4
+#Gamma_down = 100
 
 # Properties of the photonic modes
 from PyPBEC.Cavity import Cavity
@@ -84,7 +101,7 @@ cavity.set_reservoir_population(population=molecular_population)
 cavity.set_coupling_terms(coupling_terms=g)
 
 pump_value_min = 100.0
-pump_value_max = 1000000.0
+pump_value_max = 100000.0
 n_pump_values = 30
 
 delta_p = (pump_value_max / pump_value_min) ** (1 / n_pump_values) - 1
@@ -120,15 +137,18 @@ for value in tqdm(pumps):
     mode_degeneracy[5] = 1
     mode_degeneracy[27] = 1
 
-    steady_state_photon_population = [
-        np.sum(solved_cavity_steadystate.photons[:, np.where(mode_degeneracy == mode_number)[0]], 1)
-        for mode_number in list(set(list(mode_degeneracy)))]
-    steady_state_photon_population = np.transpose(np.array(steady_state_photon_population))
+    steady_state_photon_population = degeneracy_sum(mode_degeneracy, solved_cavity_steadystate.photons)
+
+    steady_state_photon_population = np.abs(steady_state_photon_population)
+    # steady_state_photon_population = [
+    #     np.sum(solved_cavity_steadystate.photons[:, np.where(mode_degeneracy == mode_number)[0]], 1)
+    #     for mode_number in list(set(list(mode_degeneracy)))]
+    # steady_state_photon_population = np.transpose(np.array(steady_state_photon_population))
 
     # Appends
     populations.append(steady_state_photon_population)
-populations = np.array(populations)
 
+populations = np.array(populations)
 populations = np.squeeze(populations)
 
 [plt.plot(pumps, populations[:, i], label="mode {0}".format(i)) for i in range(0, populations.shape[1])]

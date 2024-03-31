@@ -3,13 +3,25 @@ import scipy.constants as sc
 import matplotlib.pyplot as plt
 import os
 import sys
-from tqdm import tqdm as tqdm
 sys.path.insert(0, os.path.abspath(''))
 from PyPBEC.Cavity import Modes
 
+def degeneracy_sum(degeneracy_array, populations):
+    summed_pop = []
+    populations = populations.flatten()
 
+    i=0
+    while i < len(degeneracy_array):
+        if degeneracy_array[i] == 1:
+            summed_pop.append(populations[i])
+            i = i + 1
+        elif degeneracy_array[i] == 2:
+            summed_pop.append(degeneracy_array[i] + degeneracy_array[i+1])
+            i = i + 2
+
+    return summed_pop
 def pop_solve(grid_size = 12.0*1e-6, grid_delta = 0.5*1e-6, L0 = 1.96*1e-6, q = 17, n = 2.4, n_modes = 50,
-              feature_RoC = 100.0*1e-6, feature_depth = 0.279*1e-6, pump_width=2.5*1e-6, xoffset=0*1e-6,
+              feature_RoC = 0.1, feature_depth = 0.279*1e-6, pump_width=2.5*1e-6, xoffset=0*1e-6,
               yoffset=0*1e-6, cavity_loss_rate = 20, gamma_down_factor = 4, pump_value_min = 100.0,
               pump_value_max = 1000000.0, n_pump_values = 30, plot=False):
 
@@ -24,6 +36,8 @@ def pop_solve(grid_size = 12.0*1e-6, grid_delta = 0.5*1e-6, L0 = 1.96*1e-6, q = 
     pump_base = np.exp(-((X - xoffset)**2+(Y - yoffset)**2) / pump_width**2)
     pump = 1*(pump_base/np.sum(pump_base))
     cavity_modes.load_pump(pump=pump)
+
+    from tqdm import tqdm
 
     for i in tqdm(range(0, 12)):
         cavity_modes.plot_cavity(start_mode=i*8, plot=False)
@@ -106,10 +120,9 @@ def pop_solve(grid_size = 12.0*1e-6, grid_delta = 0.5*1e-6, L0 = 1.96*1e-6, q = 
         mode_degeneracy[5] = 1
         mode_degeneracy[27] = 1
 
-        steady_state_photon_population = [
-            np.sum(solved_cavity_steadystate.photons[:, np.where(mode_degeneracy == mode_number)[0]], 1)
-            for mode_number in list(set(list(mode_degeneracy)))]
-        steady_state_photon_population = np.transpose(np.array(steady_state_photon_population))
+        steady_state_photon_population = degeneracy_sum(mode_degeneracy, solved_cavity_steadystate.photons)
+
+        steady_state_photon_population = np.abs(steady_state_photon_population)
 
         # Appends
         populations.append(steady_state_photon_population)
