@@ -84,9 +84,6 @@ def pop_solve(grid_size = 12.0*1e-6, grid_delta = 0.5*1e-6, L0 = 1.96*1e-6, q = 
     # Coupling between photonic and molecular modes
     cavity.set_coupling_terms(coupling_terms=g)
 
-    pump_value_min = 100.0
-    pump_value_max = 1000000.0
-    n_pump_values = 30
 
     delta_p = (pump_value_max/pump_value_min)**(1/n_pump_values)-1
     pumps = [(1+delta_p)**i*pump_value_min for i in range(0, n_pump_values)]
@@ -115,14 +112,19 @@ def pop_solve(grid_size = 12.0*1e-6, grid_delta = 0.5*1e-6, L0 = 1.96*1e-6, q = 
         solved_cavity_steadystate = solver_steadystate.solve()
 
         # Sums the populations over the mode degeneracy, g=n+1, with n=0,1,2,...
-        mode_degeneracy = 2*np.ones(n_modes)
-        mode_degeneracy[0] = 1
-        mode_degeneracy[5] = 1
-        mode_degeneracy[27] = 1
+        mode_degeneracy = np.array([j for j in range(0, n_modes) for i in range(0, j)][0:n_modes])
+        steady_state_photon_population = [
+            np.sum(solved_cavity_steadystate.photons[:, np.where(mode_degeneracy == mode_number)[0]], 1)
+            for mode_number in list(set(list(mode_degeneracy)))]
+        steady_state_photon_population = np.transpose(np.array(steady_state_photon_population))
 
-        steady_state_photon_population = degeneracy_sum(mode_degeneracy, solved_cavity_steadystate.photons)
+        # mode_degeneracy = 2*np.ones(n_modes)
+        # mode_degeneracy[0] = 1
+        # mode_degeneracy[5] = 1
+        # mode_degeneracy[27] = 1
+        #
+        # steady_state_photon_population = degeneracy_sum(mode_degeneracy, solved_cavity_steadystate.photons)
 
-        steady_state_photon_population = np.abs(steady_state_photon_population)
 
         # Appends
         populations.append(steady_state_photon_population)
