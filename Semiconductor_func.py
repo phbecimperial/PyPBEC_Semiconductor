@@ -39,8 +39,8 @@ def pop_solve(grid_size = 12.0*1e-6, grid_delta = 0.5*1e-6, L0 = 1.96*1e-6, q = 
 
     from tqdm import tqdm
 
-    for i in tqdm(range(0, 12)):
-        cavity_modes.plot_cavity(start_mode=i*8, plot=False)
+    # for i in tqdm(range(0, 12)):
+    #     cavity_modes.plot_cavity(start_mode=i*8, plot=plot)
 
     dye_concentration = 2.0               # in mM, with 1 mM=1mol/m^3
 
@@ -150,4 +150,23 @@ def pop_solve(grid_size = 12.0*1e-6, grid_delta = 0.5*1e-6, L0 = 1.96*1e-6, q = 
 
         return populations
     else:
+        [plt.plot(pumps, populations[:,i], label="mode {0}".format(i)) for i in range(0, populations.shape[1])]
+        plt.legend()
+        plt.xlabel("Pump")
+        plt.xscale("log")
+        plt.ylabel("Photons")
+        plt.yscale("log")
+        plt.title("Absolute populations")
+        plt.savefig(r'Plots/Absolute_L0 {}, offset {}.png'.format(L0, yoffset))
+        plt.close()
+
+        [plt.plot(pumps, populations[:,i]/np.sum(populations,1), label="mode {0}".format(i)) for i in range(0, populations.shape[1])]
+        plt.legend()
+        plt.xlabel("Pump")
+        plt.xscale("log")
+        plt.ylabel("Photons")
+        plt.title("Relative populations")
+        #plt.show()
+        plt.savefig(r'Plots/Relative_L0 {}, offset {}.png'.format(L0, yoffset))
+        plt.close()
         return populations
